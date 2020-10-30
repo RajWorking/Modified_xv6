@@ -205,6 +205,7 @@ UPROGS=\
 	_timechk\
 	_benchmark\
 	_ps\
+	_setPriority\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -281,6 +282,7 @@ EXTRA=\
 	timechk.c\
 	benchmark.c\
 	ps.c\
+	setPriority.c\
 
 dist:
 	rm -rf dist

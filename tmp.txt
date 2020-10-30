@@ -1,4 +1,0 @@
-    // char *cmd[] = {"proc_info"};
-    // exec(cmd[0], cmd);
-    // char *try[] = {"echo", "world","is","nice"};
-    // exec(try[0], try);

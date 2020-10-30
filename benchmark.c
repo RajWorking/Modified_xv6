@@ -23,12 +23,12 @@ int main(int argc, char *argv[])
         if (k <= j)
         {
           // printf(1,"%d %d io time\n",k,j);
-          // sleep(50); //io time
+          sleep(200); //io time
         }
         else
         {
           // printf(1,"%d %d cpu time\n",k,j);
-          for (i = 0; i < 10000000; i++)
+          for (i = 0; i < 1000000000; i++)
           {
             ; //cpu time
           }
@@ -40,12 +40,12 @@ int main(int argc, char *argv[])
     else
     {
       //   set_priority(100-(20+j),pid); // will only matter for PBS, comment it out if not implemented yet (better priorty for more IO intensive jobs)
-      set_priority(50 - j % 3, pid);
+      set_priority(70 - j % 3, pid);
     }
   }
-  for (j = 0; j < number_of_processes + 5; j++)
-  {
-    wait();
-  }
+  // for (j = 0; j < number_of_processes + 5; j++)
+  // {
+  //   wait();
+  // }
   exit();
 }

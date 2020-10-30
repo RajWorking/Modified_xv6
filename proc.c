@@ -94,6 +94,7 @@ found:
   p->time_run = 0;
   p->time_end = 0;
   p->time_wait = 0;
+  p->total_wait = 0;
   p->priority = 60;
   p->age = 0;
   p->n_run = 0;
@@ -137,7 +138,10 @@ void inc_runtime()
         p->time_run++;
       }
     else if (p->state == RUNNABLE)
-      p->time_wait++;  
+      {
+        p->time_wait++;
+        p->total_wait++;
+      }
 
   release(&ptable.lock);
 }
@@ -182,13 +186,14 @@ void proc_info()
 
   acquire(&ptable.lock);
 
+  cprintf("PID\tPriority\tState\t\tr_time\tw_time\tn_run\t pname\n");
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if(p->pid != 0)
     {
-        cprintf("%d\t%d\t%s\t%d\t%d\t%d\t\n",
+        cprintf("%d\t%d\t\t%s\t%d\t%d\t%d\t%s\t\n",
         p->pid,p->priority,states[p->state],
-        p->time_run,p->time_wait,p->n_run);
+        p->time_run,p->time_wait,p->n_run,p->name);
     }
   }
   // cprintf("thats all folks!\n");
@@ -418,7 +423,7 @@ int waitx(int *wtime, int *rtime)
         // Found one.
 
         *rtime = p->time_run;
-        *wtime = p->time_wait;
+        *wtime = p->total_wait;
 
         pid = p->pid;
         kfree(p->kstack);

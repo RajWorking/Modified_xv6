@@ -54,6 +54,7 @@ struct proc {
   int time_run;                // Run time of process
   int time_end;                // End time of process
   int time_wait;               // Waiting time for cpu in queue
+  int total_wait;              // Net total waiting time of process
 
   int n_run;                   // number of times alloted cpu
   int priority;                // priority of process
