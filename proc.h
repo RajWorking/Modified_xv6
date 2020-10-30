@@ -52,7 +52,11 @@ struct proc {
 
   int time_start;              // Start time of process
   int time_run;                // Run time of process
-  int time_end;
+  int time_end;                // End time of process
+  int time_io;                 // Waiting time for io
+
+  int priority;                // priority of process
+  int age;                     // age of process (PBS, MLFQ)
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -60,3 +64,9 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+// Scheduling algorithms used by scheduler
+#define RR 0
+#define FCFS 1
+#define PBS 2
+#define MLFQ 3

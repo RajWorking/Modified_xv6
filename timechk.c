@@ -33,9 +33,9 @@ int main(int argc, char **argv)
         int wid = waitx(&wtime, &rtime);
 
         if (wtime < 0 || rtime < 0)
-            printf(1, "Time report for %s: Faulty report\n", argv[1]);
-        else
-            printf(1, "Time report for %s\nProcess ID: %d\nWaiting time: %d\nRunning time: %d\n\n", argv[1], wid, wtime, rtime);
+            printf(1, "Faulty report %s\n", argv[1]);
+        
+        printf(1, "Time report for %s\nProcess ID: %d\nWaiting time: %d\nRunning time: %d\n\n", argv[1], wid, wtime, rtime);
 
         exit();
     }

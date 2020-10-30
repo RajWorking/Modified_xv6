@@ -90,6 +90,27 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
+# Set scheduler
+SCHED_MACRO = -D SCHEDULER=RR
+
+ifeq ($(SCHEDULER), FCFS)
+SCHED_MACRO = -D SCHEDULER=FCFS
+endif
+
+ifeq ($(SCHEDULER), PBS)
+SCHED_MACRO = -D SCHEDULER=PBS
+endif
+
+ifeq ($(SCHEDULER), MLFQ)
+SCHED_MACRO = -D SCHEDULER=MLFQ
+endif
+
+ifeq ($(SCHEDULER), RR)
+SCHED_MACRO = -D SCHEDULER=RR
+endif
+
+CFLAGS += $(SCHED_MACRO)
+
 xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc
@@ -182,6 +203,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_timechk\
+	_benchmark\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -230,6 +252,7 @@ qemu-memfs: xv6memfs.img
 
 qemu-nox: fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
+# @echo "hello $(SCHEDULER)"
 
 .gdbinit: .gdbinit.tmpl
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
@@ -254,7 +277,8 @@ EXTRA=\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
-	timechk.c
+	timechk.c\
+	benchmark.c\
 
 dist:
 	rm -rf dist

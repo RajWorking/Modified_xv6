@@ -28,7 +28,7 @@ sys_wait(void)
 
 int sys_waitx(void)
 {
-  int *wtime; // waiting time
+  int *wtime; // waiting time for CPU (in queue)
   int *rtime; // running time
 
   if (argptr(0, (void *)&wtime, 8) < 0)
@@ -37,6 +37,17 @@ int sys_waitx(void)
     return -1;
 
   return waitx(wtime, rtime);
+}
+
+int sys_set_priority(void)
+{
+  int new_priority, pid;
+  if (argint(0, &new_priority) < 0)
+    return -1;
+  if (argint(0, &pid) < 0)
+    return -1;
+
+  return set_priority(new_priority, pid);
 }
 
 int
