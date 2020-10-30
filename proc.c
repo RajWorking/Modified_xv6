@@ -132,7 +132,7 @@ void inc_runtime()
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == RUNNING)
       {
-        // cprintf("%d running %d\n",p->pid,p->time_run);
+        cprintf("%d running %d\n",p->pid,p->time_run);
         p->time_run++;
       }
     else if (p->state == SLEEPING)
@@ -144,6 +144,9 @@ void inc_runtime()
 // change the priority of a process
 int set_priority(int new_priority, int pid)
 {
+  if(new_priority>100 || new_priority<0)
+   return -1;
+
   acquire(&ptable.lock);
     for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
@@ -152,6 +155,8 @@ int set_priority(int new_priority, int pid)
           int old_priority = p->priority;
           p->priority = new_priority;
 
+          release(&ptable.lock);
+
           if(new_priority < myproc()->priority)
             yield();
 
@@ -159,7 +164,7 @@ int set_priority(int new_priority, int pid)
         }
     }
   release(&ptable.lock);
-  cprintf("%d pid NOT found :(\n",pid);
+  cprintf("%d pid NOT found :(\n", pid);
   return -1;
 }
 
