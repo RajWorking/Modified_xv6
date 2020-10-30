@@ -53,8 +53,9 @@ struct proc {
   int time_start;              // Start time of process
   int time_run;                // Run time of process
   int time_end;                // End time of process
-  int time_io;                 // Waiting time for io
+  int time_wait;               // Waiting time for cpu in queue
 
+  int n_run;                   // number of times alloted cpu
   int priority;                // priority of process
   int age;                     // age of process (PBS, MLFQ)
 };

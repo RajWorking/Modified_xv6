@@ -50,6 +50,12 @@ int sys_set_priority(void)
   return set_priority(new_priority, pid);
 }
 
+int sys_proc_info(void)
+{
+  proc_info();
+  return 0;
+}
+
 int
 sys_kill(void)
 {

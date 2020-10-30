@@ -204,6 +204,7 @@ UPROGS=\
 	_zombie\
 	_timechk\
 	_benchmark\
+	_ps\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -279,6 +280,7 @@ EXTRA=\
 	.gdbinit.tmpl gdbutil\
 	timechk.c\
 	benchmark.c\
+	ps.c\
 
 dist:
 	rm -rf dist

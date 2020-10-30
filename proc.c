@@ -93,9 +93,10 @@ found:
   p->time_start = ticks;
   p->time_run = 0;
   p->time_end = 0;
-  p->time_io = 0;
+  p->time_wait = 0;
   p->priority = 60;
   p->age = 0;
+  p->n_run = 0;
 
   release(&ptable.lock);
 
@@ -132,11 +133,11 @@ void inc_runtime()
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == RUNNING)
       {
-        cprintf("%d running %d\n",p->pid,p->time_run);
+        // cprintf("%d running %d\n",p->pid,p->time_run);
         p->time_run++;
       }
-    else if (p->state == SLEEPING)
-      p->time_io++;  
+    else if (p->state == RUNNABLE)
+      p->time_wait++;  
 
   release(&ptable.lock);
 }
@@ -166,6 +167,33 @@ int set_priority(int new_priority, int pid)
   release(&ptable.lock);
   cprintf("%d pid NOT found :(\n", pid);
   return -1;
+}
+
+// get list of all active processes along with some basic info
+void proc_info()
+{
+  static char *states[] = {
+      [UNUSED] "Unused  ",
+      [EMBRYO] "Embryo  ",
+      [SLEEPING] "Sleeping",
+      [RUNNABLE] "Runnable",
+      [RUNNING] "Running ",
+      [ZOMBIE] "Zombie  "};
+
+  acquire(&ptable.lock);
+
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if(p->pid != 0)
+    {
+        cprintf("%d\t%d\t%s\t%d\t%d\t%d\t\n",
+        p->pid,p->priority,states[p->state],
+        p->time_run,p->time_wait,p->n_run);
+    }
+  }
+  // cprintf("thats all folks!\n");
+
+  release(&ptable.lock);
 }
 
 //PAGEBREAK: 32
@@ -390,7 +418,7 @@ int waitx(int *wtime, int *rtime)
         // Found one.
 
         *rtime = p->time_run;
-        *wtime = p->time_end - p->time_start - p->time_run - p->time_io;
+        *wtime = p->time_wait;
 
         pid = p->pid;
         kfree(p->kstack);
@@ -421,6 +449,9 @@ int waitx(int *wtime, int *rtime)
 void
 exec_proc(struct proc *p, struct cpu *c)
 {
+  p->time_wait = 0;  // process has got cpu, no longer waiting
+  p->n_run++;
+
   // Switch to chosen process.  It is the process's job
   // to release ptable.lock and then reacquire it
   // before jumping back to us.

@@ -123,6 +123,7 @@ void            wakeup(void*);
 void            yield(void);
 void            inc_runtime(void);
 int             set_priority(int, int);
+void            proc_info();
 
 // swtch.S
 void            swtch(struct context**, struct context*);
