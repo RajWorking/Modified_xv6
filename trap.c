@@ -51,7 +51,7 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
-      inc_runtime();
+      inc_waiting();
       wakeup(&ticks);
       release(&tickslock);
     }
@@ -83,6 +83,7 @@ trap(struct trapframe *tf)
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
+      // cprintf("your process is %d?\n",myproc());
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
               tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
@@ -103,9 +104,25 @@ trap(struct trapframe *tf)
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
-  if(myproc() && myproc()->state == RUNNING &&
-     tf->trapno == T_IRQ0+IRQ_TIMER)
-    yield();
+  if (myproc() && myproc()->state == RUNNING &&
+      tf->trapno == T_IRQ0 + IRQ_TIMER)
+  {
+    myproc()->time_run++;
+    #if SCHEDULER == MLFQ
+      if (myproc()->q_ticks[myproc()->priority] >= (1 << myproc()->priority))
+      {
+        if (myproc()->priority < 4)
+          myproc()->priority++;
+        yield();
+      }
+      else
+      {
+        myproc()->q_ticks[myproc()->priority]++;
+      }
+    #elif SCHEDULER != FCFS
+        yield();
+    #endif
+  }
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)

@@ -121,7 +121,7 @@ int             wait(void);
 int             waitx(int*, int*);
 void            wakeup(void*);
 void            yield(void);
-void            inc_runtime(void);
+void            inc_waiting(void);
 int             set_priority(int, int);
 void            proc_info();
 
@@ -192,3 +192,12 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+// queue.c
+struct Queue;
+struct node;
+void            push(struct Queue *q, struct proc *proc);
+void            pop(struct Queue *q);
+void            init_q(struct Queue *q);
+struct node*    create_node(void);
+void            free_node(struct node *node);

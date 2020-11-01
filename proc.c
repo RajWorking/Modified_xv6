@@ -24,6 +24,11 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+
+  for (int i = 0; i < NPROC; i++)
+    free_nodes[i].proc = 0;
+  for (int i = 0; i < 5; i++)
+    init_q(&queues[i]);
 }
 
 // Must be called with interrupts disabled
@@ -95,9 +100,23 @@ found:
   p->time_end = 0;
   p->time_wait = 0;
   p->total_wait = 0;
-  p->priority = 60;
   p->age = 0;
   p->n_run = 0;
+  p->in_queue = 0;      // not assigned a queue
+
+  #if SCHEDULER == MLFQ
+    p->priority = 0; 
+    // signifies initial queue alloted to process
+    
+    for(int i=0; i<5; i++)
+      p->q_ticks[i] = 0;
+
+  #else
+    p->priority = 60;
+
+    for (int i = 0; i < 5; i++)
+      p->q_ticks[i] = -1; // inapplicable
+#endif
 
   release(&ptable.lock);
 
@@ -127,30 +146,38 @@ found:
 
 // for each tick++ in trap, increase runtime of
 // each running process by one
-void inc_runtime()
+void inc_waiting()
 {
-  acquire(&ptable.lock);
+  // acquire(&ptable.lock);
 
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if (p->state == RUNNING)
-      {
-        // cprintf("%d running %d\n",p->pid,p->time_run);
-        p->time_run++;
-      }
-    else if (p->state == RUNNABLE)
+    {
+      if (p->state == RUNNABLE)
       {
         p->time_wait++;
         p->total_wait++;
       }
 
-  release(&ptable.lock);
+      // if(p->pid>3)
+      // cprintf("graph %d %d %d\n",ticks, p->pid, p->priority);
+    }
+
+  // release(&ptable.lock);
 }
 
 // change the priority of a process
 int set_priority(int new_priority, int pid)
 {
+  #if SCHEDULER != PBS
+    cprintf("This operation is unavailable for current scheduler\n");
+    return -1;
+  #endif
+
   if(new_priority>100 || new_priority<0)
-   return -1;
+   {
+     cprintf("This priority is invalid!\n");
+     return -1;
+   }
 
   acquire(&ptable.lock);
     for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -186,7 +213,13 @@ void proc_info()
 
   acquire(&ptable.lock);
 
-  cprintf("PID\tPriority\tState\t\tr_time\tw_time\tn_run\t pname\n");
+  #if SCHEDULER == MLFQ
+  char *str = "Cur_Queue";
+  #else
+  char *str = "Priority ";
+  #endif
+
+  cprintf("PID\t%s\tState\t\tr_time\tw_time\tn_run\t pname\n",str);
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if(p->pid != 0)
@@ -591,6 +624,56 @@ scheduler(void)
     release(&ptable.lock);
   }
 
+#elif SCHEDULER == MLFQ
+
+  for(;;)
+  {
+    // Enable interrupts on this processor.
+    sti();
+
+    struct proc *selected_proc = 0;
+
+    acquire(&ptable.lock);
+    // look for processes to be assigned to queues
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if(p->state == RUNNABLE && p->in_queue == 0)
+        {
+          p->q_ticks[p->priority] = 0;
+          push(&queues[p->priority], p);
+        }
+    }
+
+    // Loop over queues looking for process to run.
+    for (int i = 0; i < 5; i++)
+    {
+      if(queues[i].len == 0)
+       continue;
+
+      if(i>0)
+      {
+        while(queues[i].len>0 && queues[i].head->proc->time_wait >= WAIT_LIMIT) //aging
+        {
+          p = queues[i].head->proc;
+          pop(&queues[i]);
+          p->priority--;     // less value => more important
+          p->time_wait = 0;
+          push(&queues[i-1],p);
+        }
+        if(queues[i-1].len != 0)
+          break;
+      }
+
+      selected_proc = queues[i].head->proc;
+      pop(&queues[i]);
+      if (selected_proc != 0)
+          exec_proc(selected_proc, c);
+
+      break;     
+    }
+    release(&ptable.lock);
+  }
+
 #else
 cprintf("FATAL Error: incorrect scheduler: does not exist\n")
 
@@ -627,12 +710,10 @@ sched(void)
 void
 yield(void)
 {
-  #if SCHEDULER != FCFS && SCHEDULER != MLFQ
   acquire(&ptable.lock);  //DOC: yieldlock
   myproc()->state = RUNNABLE;
   sched();
   release(&ptable.lock);
-  #endif
 }
 
 // A fork child's very first scheduling by scheduler()
@@ -775,4 +856,65 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+struct node *create_node(void)
+{
+  for (int i = 0; i < NPROC; i++)
+  {
+    // null process means it is available for use
+    if (free_nodes[i].proc == 0)
+      return &free_nodes[i];
+  }
+  cprintf("Shortage of available nodes!\n");
+  return 0;
+}
+
+void free_node(struct node *node)
+{
+  node->proc = 0;
+}
+
+void init_q(struct Queue *q)
+{
+  q->head = 0;
+  q->tail = 0;
+  q->len = 0;
+}
+
+void push(struct Queue *q, struct proc *proc)
+{
+  proc->in_queue = 1;
+
+  struct node *new = create_node();
+  new->proc = proc;
+  new->next = 0;
+  q->len++;
+
+  if (q->tail == 0)
+  {
+    q->head = q->tail = new;
+    return;
+  }
+
+  q->tail->next = new;
+  q->tail = new;
+}
+
+void pop(struct Queue *q)
+{
+  if (q->head == 0)
+  {
+    cprintf("Empty Queue!\n");
+    return;
+  }
+
+  q->len--;
+  q->head->proc->in_queue = 0; // got popped
+
+  free_node(q->head);
+  q->head = q->head->next;
+
+  if (q->head == 0)
+    q->tail = 0;
 }

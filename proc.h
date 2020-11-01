@@ -58,7 +58,13 @@ struct proc {
 
   int n_run;                   // number of times alloted cpu
   int priority;                // priority of process
-  int age;                     // age of process (PBS, MLFQ)
+  int age;                     // age of process (PBS)
+
+  int in_queue;                // is the process in some queue? 
+  int q_ticks[5];              // ticks spent in the 5 queues
+
+  // current queue of a process is gotten by 'priority'
+  // timeslice of that queue is (1 << priority)
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -72,3 +78,22 @@ struct proc {
 #define FCFS 1
 #define PBS 2
 #define MLFQ 3
+
+// nodes of any queue of processes
+struct node
+{
+  struct node *next;
+  struct proc *proc;
+};
+// queues for the different levels of mlfq scheduling
+struct Queue
+{
+  struct node *head;
+  struct node *tail;
+  int len;
+};
+
+struct node free_nodes[NPROC];
+struct Queue queues[5]; // queues for mlfq scheduling
+
+#define WAIT_LIMIT 10

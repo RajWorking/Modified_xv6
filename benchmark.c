@@ -22,25 +22,22 @@ int main(int argc, char *argv[])
       {
         if (k <= j)
         {
-          // printf(1,"%d %d io time\n",k,j);
-          sleep(200); //io time
+          sleep(20); //io time
         }
         else
         {
-          // printf(1,"%d %d cpu time\n",k,j);
           for (i = 0; i < 1000000000; i++)
           {
             ; //cpu time
           }
         }
       }
-      printf(1, "Process: %d Finished --- %d\n", j, getpid());
+      printf(1, "Process Finished with pid: ---> %d\n", j, getpid());
       exit();
     }
     else
     {
-      //   set_priority(100-(20+j),pid); // will only matter for PBS, comment it out if not implemented yet (better priorty for more IO intensive jobs)
-      set_priority(70 - j % 3, pid);
+      set_priority(70 + j % 3, pid);
     }
   }
   // for (j = 0; j < number_of_processes + 5; j++)
