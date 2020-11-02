@@ -62,6 +62,7 @@ struct proc {
 
   int in_queue;                // is the process in some queue? 
   int q_ticks[5];              // ticks spent in the 5 queues
+  int cpu_ticks;               // ticks spent while running on cpu
 
   // current queue of a process is gotten by 'priority'
   // timeslice of that queue is (1 << priority)

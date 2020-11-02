@@ -103,6 +103,7 @@ found:
   p->age = 0;
   p->n_run = 0;
   p->in_queue = 0;      // not assigned a queue
+  p->cpu_ticks = 0;
 
   #if SCHEDULER == MLFQ
     p->priority = 0; 
@@ -158,8 +159,8 @@ void inc_waiting()
         p->total_wait++;
       }
 
-      // if(p->pid>3)
-      // cprintf("graph %d %d %d\n",ticks, p->pid, p->priority);
+      if(p->pid>3)
+      cprintf("graph %d %d %d\n",ticks, p->pid, p->priority);
     }
 
   // release(&ptable.lock);
@@ -219,14 +220,16 @@ void proc_info()
   char *str = "Priority ";
   #endif
 
-  cprintf("PID\t%s\tState\t\tr_time\tw_time\tn_run\t pname\n",str);
+  cprintf("PID\t%s\tState\t\tr_time\tw_time\tn_run\tq_0\tq_1\tq_2\tq_3\tq_4\tpname\n",str);
   for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if(p->pid != 0)
     {
-        cprintf("%d\t%d\t\t%s\t%d\t%d\t%d\t%s\t\n",
-        p->pid,p->priority,states[p->state],
-        p->time_run,p->time_wait,p->n_run,p->name);
+      cprintf("%d\t%d\t\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t\n",
+              p->pid, p->priority, states[p->state],
+              p->time_run, p->time_wait, p->n_run,
+              p->q_ticks[0], p->q_ticks[1], p->q_ticks[2],
+              p->q_ticks[3], p->q_ticks[4], p->name);
     }
   }
   // cprintf("thats all folks!\n");
@@ -639,7 +642,6 @@ scheduler(void)
     {
       if(p->state == RUNNABLE && p->in_queue == 0)
         {
-          p->q_ticks[p->priority] = 0;
           push(&queues[p->priority], p);
         }
     }
@@ -885,6 +887,7 @@ void init_q(struct Queue *q)
 void push(struct Queue *q, struct proc *proc)
 {
   proc->in_queue = 1;
+  proc->cpu_ticks = 0;
 
   struct node *new = create_node();
   new->proc = proc;

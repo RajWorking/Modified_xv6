@@ -109,16 +109,14 @@ trap(struct trapframe *tf)
   {
     myproc()->time_run++;
     #if SCHEDULER == MLFQ
-      if (myproc()->q_ticks[myproc()->priority] >= (1 << myproc()->priority))
+      if (myproc()->cpu_ticks >= (1 << myproc()->priority))
       {
         if (myproc()->priority < 4)
           myproc()->priority++;
         yield();
       }
-      else
-      {
-        myproc()->q_ticks[myproc()->priority]++;
-      }
+      myproc()->cpu_ticks++;
+      myproc()->q_ticks[myproc()->priority]++;
     #elif SCHEDULER != FCFS
         yield();
     #endif

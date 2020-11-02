@@ -1,11 +1,13 @@
 #include "types.h"
 #include "user.h"
 
-int number_of_processes = 10;
+int number_of_processes = 7;
 
 int main(int argc, char *argv[])
 {
+  #if SCHEDULER != MLFQ
   set_priority(0, getpid());
+  #endif
   int j;
   for (j = 0; j < number_of_processes; j++)
   {
@@ -22,22 +24,24 @@ int main(int argc, char *argv[])
       {
         if (k <= j)
         {
-          sleep(20); //io time
-        }
+              sleep(50); //io time
+        } 
         else
         {
-          for (i = 0; i < 1000000000; i++)
+          for (i = 0; i < 1e7; i++)
           {
             ; //cpu time
           }
         }
       }
-      printf(1, "Process Finished with pid: ---> %d\n", j, getpid());
+      printf(1, "Process Finished with pid: ---> %d\n", getpid());
       exit();
     }
     else
     {
-      set_priority(70 + j % 3, pid);
+      #if SCHEDULER != MLFQ
+        set_priority(70 + j % 3, pid);
+      #endif
     }
   }
   // for (j = 0; j < number_of_processes + 5; j++)
