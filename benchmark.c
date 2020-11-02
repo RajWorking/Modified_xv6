@@ -1,7 +1,13 @@
 #include "types.h"
 #include "user.h"
 
-int number_of_processes = 7;
+// Scheduling algorithms used by scheduler
+#define RR 0
+#define FCFS 1
+#define PBS 2
+#define MLFQ 3
+
+int number_of_processes = 5;
 
 int main(int argc, char *argv[])
 {
@@ -24,17 +30,19 @@ int main(int argc, char *argv[])
       {
         if (k <= j)
         {
-              sleep(50); //io time
+              sleep(100); //io time
         } 
         else
         {
-          for (i = 0; i < 1e7; i++)
+          for (i = 0; i < 1e9; i++)
           {
             ; //cpu time
           }
         }
       }
-      printf(1, "Process Finished with pid: ---> %d\n", getpid());
+      int yy = getpid();
+      proc_info();
+      printf(1, "Process Finished with pid: ---> %d\n", yy);
       exit();
     }
     else

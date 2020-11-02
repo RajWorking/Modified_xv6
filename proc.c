@@ -159,8 +159,8 @@ void inc_waiting()
         p->total_wait++;
       }
 
-      if(p->pid>3)
-      cprintf("graph %d %d %d\n",ticks, p->pid, p->priority);
+      // if(p->pid>3)
+      // cprintf("graph %d %d %d\n",ticks, p->pid, p->priority);
     }
 
   // release(&ptable.lock);
@@ -169,7 +169,7 @@ void inc_waiting()
 // change the priority of a process
 int set_priority(int new_priority, int pid)
 {
-  #if SCHEDULER != PBS
+  #if SCHEDULER == MLFQ
     cprintf("This operation is unavailable for current scheduler\n");
     return -1;
   #endif
